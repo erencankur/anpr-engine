@@ -21,6 +21,8 @@ SCHEMA_PATHS = (
     ROOT / "schemas/privacy/v1/anpr-processing-notice-v1.schema.json",
     ROOT / "schemas/privacy/v1/anpr-data-lifecycle-v1.schema.json",
     ROOT / "schemas/internal/v1/anpr-private-inference-response-v1.schema.json",
+    ROOT / "schemas/api/v2/anpr-image-inference-response-v2.schema.json",
+    ROOT / "schemas/internal/v2/anpr-private-inference-response-v2.schema.json",
 )
 PYTHON_OUTPUT = ROOT / "packages/api-contract/generated/python/contracts.py"
 TYPESCRIPT_OUTPUT = ROOT / "packages/api-contract/generated/typescript/contracts.ts"
@@ -121,6 +123,8 @@ class TypeGenerator:
             "boolean": "bool" if self.language == "python" else "boolean",
             "null": "None" if self.language == "python" else "null",
         }
+        if not isinstance(schema_type, str):
+            return "object" if self.language == "python" else "unknown"
         return mapping.get(schema_type, "object" if self.language == "python" else "unknown")
 
     def render_objects(self) -> str:

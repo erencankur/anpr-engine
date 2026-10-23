@@ -1,0 +1,11 @@
+schema_version: recognition-shadow-v1
+
+# DISABLED is the only default-safe state. SHADOW requires an explicitly supplied candidate
+# session and still keeps the project Recognition result authoritative.
+mode: DISABLED
+
+# One candidate failure opens the circuit. Retrying requires an explicit operator reset.
+failure_threshold: 1
+
+# Bound how long one optional worker can remain resident before it is closed and lazily recycled.
+max_requests_per_worker: 25

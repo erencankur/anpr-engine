@@ -1,0 +1,32 @@
+schema_version: recognition-promotion-readiness-input-v1
+
+development:
+  baseline_artifact_sha256: 25b6e4af757b87da75162293a28274e3a0ecbb7f29bc55489b7132e353ad5ff7
+  candidate_artifact_sha256: 5fffa451df2efa707bafd3d1da7e94aaebf83c5d365d2c4b8a6d439b4ac48964
+  candidate_receipt_sha256: 6b8ae8c53a044cf632d272d855ded29078e31956c751ebfe88d3e525540ea18b
+  development_shadow_report_sha256: e1499f3d292e9c5199782a2e4f04604707249b479a9abff4fb9cd03b8d55c6cf
+  cpu_soak_report_sha256: 40190c3849f44063b541db937a9ad64aba8bc5dd203c45de7c4ed5721ff56c55
+  control_rehearsal_report_sha256: 8cd617e5086b5f88110b3e482fafedb849f8c8a95ae1801d1e54484e9f575232
+
+engineering:
+  artifact_identity_verified: true
+  license_review_approved: true
+  isolated_runtime_verified: true
+  cpu_stability_verified: true
+  fail_safe_shadow_verified: true
+  control_rehearsal_verified: true
+  cuda_dependency_required: false
+  production_route_unchanged: true
+
+# These fields remain deliberately incomplete. They must not be inferred from development data.
+final_acceptance:
+  evaluation_protocol_sha256: null
+  holdout_audit_receipt_sha256: null
+  near_duplicate_review_completed: false
+  final_paired_evaluation_sha256: null
+  final_gates_passed: false
+  target_host_profile_sha256: null
+  target_host_limits_passed: false
+  live_shadow_completed: false
+  target_host_rollback_completed: false
+  owner_activation_approved: false

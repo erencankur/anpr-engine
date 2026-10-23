@@ -1,0 +1,81 @@
+# Full opt-in definition, NOT merged over the legacy /models bind mount.
+# Coolify routing labels/networks must be mapped on the existing application.
+name: anpr-public-candidate
+services:
+  inference:
+    image: ${ANPR_PADDLE_INFERENCE_IMAGE}
+    pull_policy: never
+    environment:
+      ANPR_SERVICE_ENV: production
+      ANPR_INTERNAL_SERVICE_CREDENTIAL: ${ANPR_INTERNAL_SERVICE_CREDENTIAL}
+      ANPR_APPLICATION_VERSION: ${ANPR_APPLICATION_VERSION}
+      ANPR_INFERENCE_DEVICE: cpu
+      ANPR_RUNTIME_PROFILE: lean_corners
+      ANPR_WEB_OCR_CONFIG: /app/configs/web-ocr-learned-corners.json
+      ANPR_INFERENCE_DEADLINE_SECONDS: "120"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    volumes:
+      - type: bind
+        source: ${ANPR_PADDLE_MODEL_SOURCE:?Set native OCR directory}
+        target: /models/paddleocr/inference
+        read_only: true
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${ANPR_CORNER_MODEL_SOURCE:?Set verified 640 ONNX file}
+        target: /models/corners/y5fu_640x_sim.onnx
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [private]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=128m,uid=10001,gid=10001"]
+    cpus: 0.75
+    mem_limit: 2048m
+    pids_limit: 96
+    restart: "no"
+    logging: {driver: json-file, options: {max-size: "5m", max-file: "3"}}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/readyz', timeout=2).read()"]
+      interval: 15s
+      timeout: 3s
+      retries: 8
+      start_period: 120s
+  web:
+    image: ${ANPR_PADDLE_WEB_IMAGE}
+    pull_policy: never
+    environment:
+      ANPR_PUBLIC_ORIGIN: ${ANPR_PUBLIC_ORIGIN:?Set HTTPS origin}
+      ANPR_PRIVATE_INFERENCE_URL: http://inference:8080
+      ANPR_INTERNAL_SERVICE_CREDENTIAL: ${ANPR_INTERNAL_SERVICE_CREDENTIAL}
+      ANPR_DETECTION_PROVIDER: hyperlpr640
+      ANPR_RECOGNITION_PROVIDER: paddleocr
+      ANPR_LOCAL_DIRECT_MODE: "0"
+      ANPR_DAILY_QUOTA_PATH: /quota/quota.sqlite
+      ANPR_PROXY_PROOF_ENABLED: "0"
+      ANPR_TRUSTED_PROXY_IP_HEADER: x-real-ip
+      ANPR_RATE_LIMIT_EXEMPT_IPS: ${ANPR_RATE_LIMIT_EXEMPT_IPS:-}
+    expose: ["3000"]
+    depends_on: {inference: {condition: service_healthy}}
+    networks: [front, private]
+    volumes: [quota_data:/quota]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,uid=10001,gid=10001
+      - /app/apps/web/.next/cache:rw,noexec,nosuid,nodev,size=32m,uid=10001,gid=10001
+    cpus: 0.25
+    mem_limit: 512m
+    pids_limit: 64
+    restart: "no"
+    logging: {driver: json-file, options: {max-size: "5m", max-file: "3"}}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+networks:
+  front: {}
+  private: {internal: true}
+volumes:
+  quota_data: {}

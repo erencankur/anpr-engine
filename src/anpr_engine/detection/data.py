@@ -79,6 +79,21 @@ class LetterboxTransform:
         )
         return x1, y1, x2, y2
 
+    def to_input_points(self, points: Tensor) -> Tensor:
+        """Map absolute original-image points to normalized model-input coordinates."""
+        if points.shape[-1] != 2:
+            raise ValueError("points must end with x/y coordinates")
+        scale = points.new_tensor((self.scale, self.scale))
+        padding = points.new_tensor((self.pad_x, self.pad_y))
+        return (points * scale + padding) / self.input_size
+
+    def to_original_points(self, points: Tensor) -> Tensor:
+        """Invert normalized model-input points without hiding out-of-bounds errors."""
+        if points.shape[-1] != 2:
+            raise ValueError("points must end with x/y coordinates")
+        padding = points.new_tensor((self.pad_x, self.pad_y))
+        return (points * self.input_size - padding) / self.scale
+
 
 def load_samples(
     manifest_path: Path, repository: Path, split: str

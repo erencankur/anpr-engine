@@ -25,7 +25,7 @@ function clientIp(request: NextRequest): string | null {
   if (process.env.ANPR_LOCAL_DIRECT_MODE === "1" &&
       /^http:\/\/(?:127\.0\.0\.1|localhost):[0-9]{1,5}$/.test(process.env.ANPR_PUBLIC_ORIGIN ?? "")) {
     // The local Docker port is loopback-only and has no trusted edge proxy.
-    return "local-container-loopback";
+    return "127.0.0.1";
   }
   if (process.env.ANPR_TRUSTED_PROXY_IP_HEADER !== "x-real-ip") return null;
   const ip = request.headers.get("x-real-ip");

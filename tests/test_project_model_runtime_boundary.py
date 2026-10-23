@@ -10,8 +10,29 @@ SOURCE_ROOT = ROOT / "src/anpr_engine"
 LAUNCHER = ROOT / "scripts/launch_anpr_v1_browser.py"
 TRAINER = ROOT / "scripts/train_recognition.py"
 PUBLIC_TOOLING = {
+    "audit_recognition_promotion_readiness.py",
+    "audit_evaluation_holdout.py",
+    "export_coco_bbox_annotations.py",
+    "export_ultralytics_bbox_dataset.py",
+    "export_ultralytics_pose_dataset.py",
+    "finalize_quadrilateral_pilot.py",
     "generate_api_contracts.py",
+    "benchmark_project_recognizer.py",
+    "benchmark_current_detector_paddleocr.py",
+    "soak_paddleocr_worker.py",
+    "create_openmmlab_training_receipt.py",
     "prepare_phase2d_context.py",
+    "profile_web_ocr.py",
+    "compare_paddle_backends.py",
+    "launch_local_website.py",
+    "deploy_learned_corners.py",
+    "prepare_recognition_training_inventory.py",
+    "prepare_quadrilateral_pilot.py",
+    "recover_bbox_dataset_inventory.py",
+    "rehearse_recognition_shadow_control.py",
+    "review_quadrilateral_pilot.py",
+    "review_quadrilateral_pilot_native.py",
+    "validate_openmmlab_training_plan.py",
     "validate_public_candidate.py",
 }
 

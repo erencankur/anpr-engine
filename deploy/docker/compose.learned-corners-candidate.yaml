@@ -1,0 +1,28 @@
+# Opt-in only: merge AFTER compose.public-candidate.yaml and
+# compose.paddleocr-candidate.yaml using newly built, verified image IDs.
+# No additional detector process, public port, or model download is introduced.
+services:
+  inference:
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    environment:
+      ANPR_WEB_OCR_CONFIG: /app/configs/web-ocr-learned-corners.json
+    volumes:
+      - type: bind
+        source: ${ANPR_CORNER_MODEL_SOURCE:?Set the verified 640 ONNX file path}
+        target: /models/corners/y5fu_640x_sim.onnx
+        read_only: true
+        bind:
+          create_host_path: false
+  web:
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    environment:
+      ANPR_DETECTION_PROVIDER: hyperlpr640
+      ANPR_RECOGNITION_PROVIDER: paddleocr

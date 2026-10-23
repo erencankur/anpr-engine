@@ -1,0 +1,6 @@
+# CPU runtime only: execute the existing inference artifact without PaddleX.
+paddlepaddle==3.3.1
+numpy==2.2.6
+opencv-python-headless==4.12.0.88
+Pillow==12.3.0
+PyYAML==6.0.3

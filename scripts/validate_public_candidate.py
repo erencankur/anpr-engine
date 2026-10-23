@@ -18,6 +18,15 @@ from openapi_spec_validator.readers import read_from_filename
 ROOT = Path(__file__).parents[1]
 CONTRACT_ROOT = ROOT / "packages/api-contract"
 SCHEMA_MAP = {
+    "quadrilateral-pilot-queue": ROOT
+    / "schemas/detection/v2/plate-quadrilateral-pilot-queue-v1.schema.json",
+    "quadrilateral-annotation": ROOT
+    / "schemas/detection/v2/plate-quadrilateral-annotation-v2.schema.json",
+    "quadrilateral-manifest": ROOT
+    / "schemas/detection/v2/detection-quadrilateral-manifest-v2.schema.json",
+    "image-inference-v2": ROOT / "schemas/api/v2/anpr-image-inference-response-v2.schema.json",
+    "private-inference-v2": ROOT
+    / "schemas/internal/v2/anpr-private-inference-response-v2.schema.json",
     "image-metadata": ROOT / "schemas/api/v1/anpr-image-inference-metadata-v1.schema.json",
     "image-inference": ROOT / "schemas/api/v1/anpr-image-inference-response-v1.schema.json",
     "api-error": ROOT / "schemas/api/v1/anpr-api-error-v1.schema.json",
@@ -176,8 +185,24 @@ def validate_links() -> None:
 
 
 def text_files() -> list[Path]:
-    allowed = {".md", ".py", ".toml", ".yaml", ".yml", ".json", ".jsonl", ".txt", ".ts"}
-    return [path for path in public_files() if path.suffix in allowed]
+    allowed = {
+        ".md",
+        ".py",
+        ".toml",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".jsonl",
+        ".txt",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".mjs",
+        ".css",
+        ".sh",
+        ".Dockerfile",
+    }
+    return [path for path in public_files() if path.suffix in allowed or path.name == "Dockerfile"]
 
 
 def validate_scans() -> None:
@@ -207,7 +232,16 @@ def validate_scans() -> None:
         raise ValueError(f"absolute workstation paths: {absolute_matches}")
     if secret_matches:
         raise ValueError(f"credential-like assignments: {secret_matches}")
-    forbidden_suffixes = {".pt", ".pth", ".ckpt", ".onnx", ".safetensors"}
+    forbidden_suffixes = {
+        ".pt",
+        ".pth",
+        ".ckpt",
+        ".onnx",
+        ".safetensors",
+        ".pdiparams",
+        ".pdparams",
+        ".engine",
+    }
     weights = [
         str(path.relative_to(ROOT)) for path in files if path.suffix.lower() in forbidden_suffixes
     ]
@@ -283,7 +317,9 @@ def validate_contracts() -> None:
         "global_inference_concurrency": 1,
         "per_session_active_inference": 1,
         "queue_depth": 0,
-        "model_bearing_processes": 1,
+        "model_bearing_processes": 2,
+        "idle_model_bearing_processes": 1,
+        "model_bearing_processes_by_recognition_provider": {"project": 1, "paddleocr": 2},
         "unsafe_concurrency_override_allowed": False,
         "automatic_retry": False,
         "background_inference": False,

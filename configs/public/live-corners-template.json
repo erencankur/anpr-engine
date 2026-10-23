@@ -1,0 +1,13 @@
+{
+  "project_name": "anpr-corners",
+  "public_origin": "https://YOUR-DOMAIN.example",
+  "web_port": 39084,
+  "internal_credential": "REPLACE_WITH_RANDOM_SECRET_AT_LEAST_32_CHARACTERS",
+  "application_version": "corners-release-1",
+  "model_bundle": "/srv/anpr/models/bundle",
+  "paddle_model": "/srv/anpr/models/paddleocr/inference",
+  "corner_model": "/srv/anpr/models/corners/y5fu_640x_sim.onnx",
+  "inference_image": "anpr-engine-inference:corners-release-1",
+  "web_image": "anpr-engine-web:corners-release-1",
+  "release_checks_confirmed": false
+}

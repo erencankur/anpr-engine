@@ -1,0 +1,8 @@
+# Reproduces the verified Apple Silicon development/smoke environment only.
+# Install torch/torchvision for the target platform before building MMCV native ops.
+numpy==1.26.4
+torch==2.2.2
+torchvision==0.17.2
+mmengine==0.10.7
+mmcv==2.1.0
+mmdet==3.3.0

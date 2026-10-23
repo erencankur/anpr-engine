@@ -9,7 +9,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function privateResult(value: unknown, requestId: string, admissionId: string): AnprPrivateInferenceResponseV1 {
+function jpegSize(bytes: Buffer): [number, number] | null {
+  let offset = 2;
+  while (offset + 4 <= bytes.length) {
+    if (bytes[offset++] !== 0xff) return null;
+    while (bytes[offset] === 0xff) offset++;
+    const marker = bytes[offset++];
+    if (marker === 0xda || marker === 0xd9 || offset + 2 > bytes.length) return null;
+    const length = bytes.readUInt16BE(offset);
+    if (length < 2 || offset + length > bytes.length) return null;
+    if (marker === 0xc0 || marker === 0xc2) {
+      if (length < 8) return null;
+      return [bytes.readUInt16BE(offset + 5), bytes.readUInt16BE(offset + 3)];
+    }
+    offset += length;
+  }
+  return null;
+}
+
+export function privateResult(value: unknown, requestId: string, admissionId: string): AnprPrivateInferenceResponseV1 {
   if (!isRecord(value) || value.schema_version !== "anpr-private-inference-response-v1" ||
       value.request_id !== requestId || value.admission_id !== admissionId || !isRecord(value.detection) ||
       !isRecord(value.models) || !isRecord(value.timings_ms) ||
@@ -17,14 +35,55 @@ function privateResult(value: unknown, requestId: string, admissionId: string): 
     throw new ImageError("INFERENCE_FAILED");
   }
   const models = value.models;
+  const provider = process.env.ANPR_RECOGNITION_PROVIDER ?? "project";
+  if (!["project", "paddleocr"].includes(provider)) throw new ImageError("MODEL_NOT_READY");
+  const paddle = provider === "paddleocr";
+  const detector = process.env.ANPR_DETECTION_PROVIDER ?? "project";
+  if (!["project", "hyperlpr", "hyperlpr640"].includes(detector)) throw new ImageError("MODEL_NOT_READY");
+  const learned = detector !== "project";
   if (!isRecord(models.detection) || !isRecord(models.recognition) ||
-      models.detection.model_id !== "detection-v3-20260827" ||
-      models.recognition.model_id !== "m3-v4-stroke-20260914" ||
-      models.detection.sha256 !== "0d5e9b52fae5638e0ef1badafdeb53fe0771d056e43c4953d13cceed520e71ea" ||
-      models.recognition.sha256 !== "25b6e4af757b87da75162293a28274e3a0ecbb7f29bc55489b7132e353ad5ff7") {
+      models.detection.model_id !== (learned ? (detector === "hyperlpr640" ? "hyperlpr-y5fu-640-corners-v1" : "hyperlpr-y5fu-320-corners-v1") : "detection-v3-20260827") ||
+      models.recognition.model_id !== (paddle ? "paddleocr-latin-finetuned-v1" : "m3-v4-stroke-20260914") ||
+      value.prediction_source !== (paddle ? "paddleocr" : "existing_project_decoder") ||
+      models.detection.sha256 !== (learned ? (detector === "hyperlpr640" ? "0306de937471b87f56eb3f5620815e7e7058f8ab7428e0734fc64627cc4d716c" : "2a985dc63a5cc947ec36d18503d6fc0fd54525b9dba17f2fe29a71e86b44456d") : "0d5e9b52fae5638e0ef1badafdeb53fe0771d056e43c4953d13cceed520e71ea") ||
+      models.recognition.sha256 !== (paddle ? "5fffa451df2efa707bafd3d1da7e94aaebf83c5d365d2c4b8a6d439b4ac48964" : "25b6e4af757b87da75162293a28274e3a0ecbb7f29bc55489b7132e353ad5ff7")) {
     throw new ImageError("INFERENCE_FAILED");
   }
   const box = value.detection.box_xyxy_normalized;
+  if (value.candidate_prediction !== undefined && (value.prediction !== null ||
+      typeof value.candidate_prediction !== "string" || !/^[0-9A-Z ]{1,16}$/.test(value.candidate_prediction) ||
+      value.informational_confidence === null)) throw new ImageError("INFERENCE_FAILED");
+  if (value.plate_crops !== undefined) {
+    const crops = value.plate_crops;
+    if (!isRecord(crops) || !isRecord(value.plate_geometry) || value.plate_geometry.state !== "estimated" ||
+        Object.keys(crops).some((key) => !["rectified", "recognition_input"].includes(key))) throw new ImageError("INFERENCE_FAILED");
+    for (const key of ["rectified", "recognition_input"]) {
+      const preview = crops[key];
+      if (preview === null) continue;
+      if (!isRecord(preview) || preview.media_type !== "image/jpeg" || preview.metadata_removed !== true ||
+          Object.keys(preview).some((field) => !["media_type", "encoded_data", "width", "height", "metadata_removed"].includes(field)) ||
+          typeof preview.encoded_data !== "string" || preview.encoded_data.length < 8 || preview.encoded_data.length > 16000 ||
+          preview.encoded_data.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(preview.encoded_data) ||
+          typeof preview.width !== "number" || !Number.isInteger(preview.width) || preview.width < 1 || preview.width > 640 ||
+          typeof preview.height !== "number" || !Number.isInteger(preview.height) || preview.height < 1 || preview.height > 192) throw new ImageError("INFERENCE_FAILED");
+      const bytes = Buffer.from(preview.encoded_data, "base64");
+      if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes.at(-2) !== 0xff || bytes.at(-1) !== 0xd9) throw new ImageError("INFERENCE_FAILED");
+      const dimensions = jpegSize(bytes);
+      if (!dimensions || dimensions[0] !== preview.width || dimensions[1] !== preview.height) throw new ImageError("INFERENCE_FAILED");
+    }
+  }
+  if (value.plate_geometry !== undefined) {
+    const geometry = value.plate_geometry;
+    if (!isRecord(geometry) || Object.keys(geometry).some((key) => !["state", "method", "quadrilateral_xy_normalized", "rectification_applied"].includes(key))) throw new ImageError("INFERENCE_FAILED");
+    const quad = geometry.quadrilateral_xy_normalized;
+    if (geometry.state === "estimated") {
+      if (box === null || geometry.method !== (learned ? "HYPERLPR_FOUR_CORNERS_V1" : "PLATE_FACE_CONTOUR_V1") || geometry.rectification_applied !== true ||
+          !Array.isArray(quad) || quad.length !== 4 || !quad.every((point) => Array.isArray(point) && point.length === 2 && point.every((n) => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1))) throw new ImageError("INFERENCE_FAILED");
+      // Clockwise image-space convex polygon: reject crossed, duplicate or degenerate corners.
+      const points = quad as number[][];
+      if (points.some((a, i) => { const b = points[(i + 1) % 4]; const c = points[(i + 2) % 4]; return (b[0]-a[0])*(c[1]-b[1]) - (b[1]-a[1])*(c[0]-b[0]) <= 1e-10; })) throw new ImageError("INFERENCE_FAILED");
+    } else if (!["unresolved", "not_run"].includes(String(geometry.state)) || quad !== null || geometry.method !== null || geometry.rectification_applied !== false) throw new ImageError("INFERENCE_FAILED");
+  }
   const timings = value.timings_ms as Record<string, unknown>;
   const confidence = (item: unknown) => item === null || (typeof item === "number" && Number.isFinite(item) && item >= 0 && item <= 1);
   if (!(box === null || (Array.isArray(box) && box.length === 4 && box.every((item) => typeof item === "number" && Number.isFinite(item) && item >= 0 && item <= 1) && box[0] <= box[2] && box[1] <= box[3])) ||
@@ -32,7 +91,7 @@ function privateResult(value: unknown, requestId: string, admissionId: string): 
       !confidence(value.informational_confidence) || !confidence(value.detection.informational_confidence) ||
       ["total", "validation", "detection", "crop_refinement", "recognition"].some((key) => { const item = timings[key]; return typeof item !== "number" || !Number.isFinite(item) || item < 0 || item > 120_000; }) ||
       !["valid", "invalid", "not_run"].includes(String(value.structural_validity)) ||
-      value.crop_policy !== "BLUE_BAND_GLYPH_QUAD_V1") throw new ImageError("INFERENCE_FAILED");
+      value.crop_policy !== (learned ? "HYPERLPR_FOUR_CORNERS_V1" : "BLUE_BAND_GLYPH_QUAD_V1")) throw new ImageError("INFERENCE_FAILED");
   return value as unknown as AnprPrivateInferenceResponseV1;
 }
 
@@ -55,9 +114,13 @@ export function publicResult(privateValue: AnprPrivateInferenceResponseV1): Anpr
       box_xyxy_normalized: privateValue.detection.box_xyxy_normalized,
       confidence: privateValue.detection.informational_confidence
     },
-    // The private contract names the method but does not attest whether refinement applied.
-    crop_refinement: { state: noPlate ? "not_run" : "unavailable", method: found ? privateValue.crop_policy : null },
-    recognition: { prediction: privateValue.prediction, confidence: privateValue.informational_confidence },
+    ...(privateValue.plate_geometry ? { plate_geometry: privateValue.plate_geometry } : {}),
+    ...(privateValue.plate_crops ? { plate_crops: privateValue.plate_crops } : {}),
+    crop_refinement: privateValue.plate_geometry?.state === "estimated"
+      ? { state: "applied", method: privateValue.plate_geometry.method }
+      : { state: noPlate ? "not_run" : "unavailable", method: found ? privateValue.crop_policy : null },
+    recognition: { prediction: privateValue.prediction, confidence: privateValue.informational_confidence,
+      ...(privateValue.candidate_prediction !== undefined ? {candidate_prediction: privateValue.candidate_prediction} : {}) },
     structural_validation: privateValue.structural_validity,
     human_review_required: true,
     annotated_image: null,

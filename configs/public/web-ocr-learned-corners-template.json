@@ -1,0 +1,13 @@
+{
+  "python": "/opt/paddle-venv/bin/python",
+  "worker": "/app/runtimes/paddleocr-worker/worker.py",
+  "model_dir": "/models/paddleocr/inference",
+  "model_sha256": "5fffa451df2efa707bafd3d1da7e94aaebf83c5d365d2c4b8a6d439b4ac48964",
+  "cpu_threads": 1,
+  "backend": "paddle_inference",
+  "corner_model": "/models/corners/y5fu_640x_sim.onnx",
+  "corner_model_size": 640,
+  "idle_seconds": 15,
+  "timeout_seconds": 30,
+  "minimum_confidence": 0.99
+}

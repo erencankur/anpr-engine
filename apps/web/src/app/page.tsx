@@ -5,10 +5,10 @@ import { Workspace } from "@/components/workspace";
 const origin = "https://anpr-engine.vibesofters.com";
 
 export const metadata: Metadata = {
-  title: "ANPR Engine — Plate detection and recognition demonstration",
-  description: "A cautious single-image plate detection and recognition demonstration. Every result requires human review.",
+  title: "ANPR Engine — Plaka tespit ve tanıma gösterimi",
+  description: "Tek görüntüden plaka tespiti ve tanıma gösterimi. Her sonuç insan incelemesi gerektirir.",
   alternates: { canonical: origin },
-  openGraph: { title: "ANPR Engine", description: "Single-image demonstration with mandatory human review.", url: origin, locale: "en_US", type: "website" },
+  openGraph: { title: "ANPR Engine", description: "İnsan incelemesi gerektiren tek görüntülü plaka tanıma gösterimi.", url: origin, locale: "tr_TR", type: "website" },
   robots: { index: false, follow: false }
 };
 

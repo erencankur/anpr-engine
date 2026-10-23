@@ -1,0 +1,4 @@
+# This environment is intentionally separate from the main ANPR service environment.
+# Update only with a new compatibility and artifact-parity record.
+paddlepaddle==3.3.1
+paddleocr==3.7.0

@@ -1,0 +1,30 @@
+schema_version: openmmlab-training-plan-v1
+run_id: rtmdet-tiny-random-smoke-v1
+task: detect
+architecture: rtmdet
+framework: mmdetection
+framework_version: 3.3.0
+framework_source_revision: 44ebd17b145c2372c4b700bfb9cb20dbd28ab64a
+training_config_sha256: d62338ccdc7319457acb67112d1c805de017d17c4efb208e3cf54d05f59bbebc
+framework_license:
+  license_id: Apache-2.0
+  review_status: approved
+  reference: mmdetection-v3.3.0-LICENSE-sha256-874b8b2e6f12306a1ff7812c068a0dbf880418b8ac1f7190382bd6c6da9f23a1
+  reviewed_by: engineering-owner
+  reviewed_on: "2026-10-14"
+initialization: random_project_owned
+dataset_id: detection-v3-recovered-v1
+dataset_export_sha256: a21b73661bac56fa53c93b3a83a59168e15adbf1cfc5d617bb806939a115f21d
+seed: 42
+deterministic: true
+image_size: 320
+epochs: 1
+batch_size: 1
+workers: 0
+device: mps
+optimizer: AdamW
+augmentation:
+  horizontal_flip_probability: 0.5
+  photometric_distortion: true
+  mosaic_probability: 0.0
+  mixup_probability: 0.0

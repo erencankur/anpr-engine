@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anpr-engine.vibesofters.com/schemas/detection/v2/plate-quadrilateral-annotation-v2.schema.json",
+  "title": "PlateQuadrilateralAnnotationV2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "image_sha256", "image_width", "image_height", "instances"],
+  "properties": {
+    "schema_version": {"const": "plate-quadrilateral-annotation-v2"},
+    "image_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "image_width": {"type": "integer", "minimum": 1},
+    "image_height": {"type": "integer", "minimum": 1},
+    "instances": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/PlateInstance"}
+    }
+  },
+  "$defs": {
+    "NormalizedPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "CornerVisibility": {
+      "type": "string",
+      "enum": ["VISIBLE", "OCCLUDED", "CLIPPED", "AMBIGUOUS"]
+    },
+    "PlateInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instance_id",
+        "class_id",
+        "corners",
+        "corner_visibility",
+        "geometry_usable_for_rectification",
+        "geometry_reason"
+      ],
+      "properties": {
+        "instance_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "class_id": {"const": "license_plate"},
+        "corners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/NormalizedPoint"}
+        },
+        "corner_visibility": {
+          "type": "array",
+          "prefixItems": [
+            {"$ref": "#/$defs/CornerVisibility"},
+            {"$ref": "#/$defs/CornerVisibility"},
+            {"$ref": "#/$defs/CornerVisibility"},
+            {"$ref": "#/$defs/CornerVisibility"}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "geometry_usable_for_rectification": {"type": "boolean"},
+        "geometry_reason": {
+          "type": "string",
+          "enum": ["FULLY_VISIBLE", "OCCLUDED", "CLIPPED", "AMBIGUOUS"]
+        }
+      }
+    }
+  }
+}

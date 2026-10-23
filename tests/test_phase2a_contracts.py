@@ -141,6 +141,28 @@ def test_all_json_schema_objects_are_closed() -> None:
         inspect(_load(schema_path), name)
 
 
+def test_optional_geometry_and_paddle_identity_are_schema_checked() -> None:
+    response = _fixture("valid", "image-inference-response.json")
+    validator = _validator("response")
+    response["plate_geometry"] = {
+        "state": "estimated",
+        "method": "PLATE_FACE_CONTOUR_V1",
+        "quadrilateral_xy_normalized": [[0.1, 0.3], [0.8, 0.1], [0.8, 0.4], [0.1, 0.6]],
+        "rectification_applied": True,
+    }
+    response["models"]["recognition"] = {
+        "model_id": "paddleocr-latin-finetuned-v1",
+        "sha256": "5fffa451df2efa707bafd3d1da7e94aaebf83c5d365d2c4b8a6d439b4ac48964",
+    }
+    assert not list(validator.iter_errors(response))
+    invalid = copy.deepcopy(response)
+    invalid["plate_geometry"]["quadrilateral_xy_normalized"] = None
+    assert list(validator.iter_errors(invalid))
+    invalid = copy.deepcopy(response)
+    invalid["models"]["recognition"]["model_id"] = "m3-v4-stroke-20260914"
+    assert list(validator.iter_errors(invalid))
+
+
 def test_openapi_is_valid_and_exposes_only_raw_jpeg_png() -> None:
     specification, base_uri = read_from_filename(str(OPENAPI))
     validate_openapi_document(specification, base_uri=base_uri)
@@ -359,7 +381,12 @@ def test_route_allowlist_and_resource_invariants_are_closed() -> None:
     assert resources["global_inference_concurrency"] == 1
     assert resources["per_session_active_inference"] == 1
     assert resources["queue_depth"] == 0
-    assert resources["model_bearing_processes"] == 1
+    assert resources["model_bearing_processes"] == 2
+    assert resources["idle_model_bearing_processes"] == 1
+    assert resources["model_bearing_processes_by_recognition_provider"] == {
+        "project": 1,
+        "paddleocr": 2,
+    }
     assert resources["batch_processing"] is False
     assert resources["public_python_inference_endpoint"] is False
 

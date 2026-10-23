@@ -94,6 +94,20 @@ class DecoupledHead(nn.Module):
         return torch.cat((self.objectness(stem), self.regression(stem)), dim=1)
 
 
+class QuadrilateralDecoupledHead(DecoupledHead):
+    def __init__(self, input_channels: int, head_channels: int) -> None:
+        super().__init__(input_channels, head_channels)
+        self.corners = nn.Sequential(
+            ConvNormAct(head_channels, head_channels),
+            ConvNormAct(head_channels, head_channels),
+            nn.Conv2d(head_channels, 8, 1),
+        )
+
+    def forward(self, features: Tensor) -> Tensor:
+        stem = self.stem(features)
+        return torch.cat((self.objectness(stem), self.regression(stem), self.corners(stem)), dim=1)
+
+
 class TinyYoloDetector(nn.Module):
     """One-stage single-class detector with a stride-32 dense grid head."""
 
@@ -177,7 +191,18 @@ class YoloXMultiScaleDetector(nn.Module):
         )
 
 
+class YoloXQuadrilateralDetector(YoloXMultiScaleDetector):
+    """V2 detector retaining V1 parameter names and adding four-corner outputs."""
+
+    def __init__(self, base_channels: int = 24, head_channels: int = 96) -> None:
+        super().__init__(base_channels=base_channels, head_channels=head_channels)
+        self.heads = nn.ModuleList(
+            QuadrilateralDecoupledHead(head_channels, head_channels) for _ in range(3)
+        )
+
+
 DetectorOutput: TypeAlias = Tensor | tuple[Tensor, Tensor, Tensor]
+QuadrilateralDetectorOutput: TypeAlias = tuple[Tensor, Tensor, Tensor]
 
 
 def decode_multiscale_outputs(output: tuple[Tensor, Tensor, Tensor]) -> tuple[Tensor, Tensor]:
@@ -209,6 +234,36 @@ def decode_multiscale_outputs(output: tuple[Tensor, Tensor, Tensor]) -> tuple[Te
             ).reshape(batch_size, -1, 4)
         )
     return torch.cat(logits, dim=1), torch.cat(boxes, dim=1)
+
+
+def decode_multiscale_quadrilateral_outputs(
+    output: QuadrilateralDetectorOutput,
+    *,
+    corner_offset_scale: float,
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Return logits, normalized boxes, and candidate-bound ordered corners."""
+    if not math.isfinite(corner_offset_scale) or corner_offset_scale <= 0.0:
+        raise ValueError("corner_offset_scale must be finite and positive")
+    objectness_logits, boxes = decode_multiscale_outputs(
+        cast(tuple[Tensor, Tensor, Tensor], tuple(level[:, :5] for level in output))
+    )
+    corners: list[Tensor] = []
+    box_offset = 0
+    for level in output:
+        batch_size, channels, grid_height, grid_width = level.shape
+        if channels != 13:
+            raise ValueError("quadrilateral head must produce exactly 13 channels")
+        candidate_count = grid_height * grid_width
+        level_boxes = boxes[:, box_offset : box_offset + candidate_count]
+        box_offset += candidate_count
+        centers = (level_boxes[..., :2] + level_boxes[..., 2:]) / 2.0
+        sizes = (level_boxes[..., 2:] - level_boxes[..., :2]).clamp(min=1e-8)
+        raw_corners = level[:, 5:].permute(0, 2, 3, 1).reshape(batch_size, candidate_count, 4, 2)
+        decoded = centers[:, :, None, :] + (
+            corner_offset_scale * raw_corners.tanh() * sizes[:, :, None, :]
+        )
+        corners.append(decoded)
+    return objectness_logits, boxes, torch.cat(corners, dim=1)
 
 
 def multiscale_cell_geometry(

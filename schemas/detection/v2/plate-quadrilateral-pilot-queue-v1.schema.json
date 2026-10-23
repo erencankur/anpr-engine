@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anpr-engine.vibesofters.com/schemas/detection/v2/plate-quadrilateral-pilot-queue-v1.schema.json",
+  "title": "PlateQuadrilateralPilotQueueV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "dataset_content_sha256",
+    "selection",
+    "policy",
+    "summary",
+    "records",
+    "records_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "plate-quadrilateral-pilot-queue-v1"},
+    "dataset_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "dataset_content_sha256": {"$ref": "#/$defs/Sha256"},
+    "records_sha256": {"$ref": "#/$defs/Sha256"},
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "seed", "maximum_samples", "selected_samples", "stratification"],
+      "properties": {
+        "method": {"const": "coverage-round-robin-quantile-v1"},
+        "seed": {"type": "integer"},
+        "maximum_samples": {"type": "integer", "minimum": 1},
+        "selected_samples": {"type": "integer", "minimum": 1},
+        "stratification": {
+          "const": ["split", "cohort", "box_area_quantile", "aspect_quantile"]
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposals_are_ground_truth", "human_review_required", "bbox_corners_used_as_quad"],
+      "properties": {
+        "proposals_are_ground_truth": {"const": false},
+        "human_review_required": {"const": true},
+        "bbox_corners_used_as_quad": {"const": false}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposal_available", "proposal_unavailable"],
+      "properties": {
+        "proposal_available": {"type": "integer", "minimum": 0},
+        "proposal_unavailable": {"type": "integer", "minimum": 0}
+      }
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/Record"}
+    }
+  },
+  "$defs": {
+    "Sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "Point": {
+      "type": "array",
+      "prefixItems": [
+        {"type": "number", "minimum": 0, "maximum": 1},
+        {"type": "number", "minimum": 0, "maximum": 1}
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "Proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["corners_xy_normalized", "method_id"],
+      "properties": {
+        "corners_xy_normalized": {
+          "type": "array",
+          "prefixItems": [
+            {"$ref": "#/$defs/Point"},
+            {"$ref": "#/$defs/Point"},
+            {"$ref": "#/$defs/Point"},
+            {"$ref": "#/$defs/Point"}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "method_id": {"const": "BLUE_BAND_GLYPH_QUAD_V1"}
+      }
+    },
+    "Record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_id",
+        "split",
+        "cohort",
+        "canonical_image_path",
+        "canonical_label_path",
+        "image_sha256",
+        "label_sha256",
+        "image_width",
+        "image_height",
+        "box_xywh_normalized",
+        "review_state",
+        "proposal",
+        "proposal_reason"
+      ],
+      "properties": {
+        "sample_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "split": {"type": "string", "enum": ["train", "validation", "test"]},
+        "cohort": {"type": "string", "minLength": 1, "maxLength": 32},
+        "canonical_image_path": {"type": "string", "minLength": 1},
+        "canonical_label_path": {"type": "string", "minLength": 1},
+        "image_sha256": {"$ref": "#/$defs/Sha256"},
+        "label_sha256": {"$ref": "#/$defs/Sha256"},
+        "image_width": {"type": "integer", "minimum": 1},
+        "image_height": {"type": "integer", "minimum": 1},
+        "box_xywh_normalized": {
+          "type": "array",
+          "prefixItems": [
+            {"type": "number", "minimum": 0, "maximum": 1},
+            {"type": "number", "minimum": 0, "maximum": 1},
+            {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+            {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "review_state": {"const": "REVIEW_REQUIRED"},
+        "proposal": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/Proposal"}]},
+        "proposal_reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+schema_version: model-provider-manifest-v1
+bundle_id: candidate-bundle-id
+detection:
+  role: detection
+  provider: openmmlab
+  model_id: rtmdet-plate-candidate
+  architecture: rtmdet
+  version: candidate-version
+  artifact_format: onnx
+  artifact_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  source: approved-internal-artifact-reference
+  preprocessing_signature: detection-preprocessing-v1
+  runtime: onnxruntime
+  runtime_version: pinned-runtime-version
+  license:
+    license_id: Apache-2.0
+    review_status: pending
+    reference: official-source-and-checkpoint-license-evidence
+corner:
+  role: corner
+  provider: openmmlab
+  model_id: rtmpose-plate-corner-candidate
+  architecture: rtmpose
+  version: candidate-version
+  artifact_format: onnx
+  artifact_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  source: approved-internal-artifact-reference
+  preprocessing_signature: corner-preprocessing-v1
+  runtime: onnxruntime
+  runtime_version: pinned-runtime-version
+  license:
+    license_id: Apache-2.0
+    review_status: pending
+    reference: official-source-and-checkpoint-license-evidence
+recognition:
+  role: recognition
+  provider: paddleocr
+  model_id: latin-pp-ocrv5-mobile-rec-candidate
+  architecture: latin_PP-OCRv5_mobile_rec
+  version: candidate-version
+  artifact_format: onnx
+  artifact_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  source: approved-internal-artifact-reference
+  preprocessing_signature: recognition-preprocessing-v1
+  runtime: onnxruntime
+  runtime_version: pinned-runtime-version
+  license:
+    license_id: Apache-2.0
+    review_status: pending
+    reference: official-source-and-checkpoint-license-evidence

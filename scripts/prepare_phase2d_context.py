@@ -30,7 +30,7 @@ def allowed_paths(service: str) -> list[Path]:
         if public.is_dir():
             source.extend(sorted(public.rglob("*")))
         return [ROOT / item for item in fixed] + [item for item in source if item.is_file()]
-    target = "amd64" if service == "inference-amd64" else "arm64"
+    target = "amd64" if service in {"inference-amd64", "inference-paddleocr-amd64"} else "arm64"
     dockerfile = "inference.amd64.Dockerfile" if target == "amd64" else "inference.Dockerfile"
     fixed = [
         f"deploy/docker/requirements.cpu-{target}.in",
@@ -38,6 +38,24 @@ def allowed_paths(service: str) -> list[Path]:
         f"deploy/docker/{dockerfile}",
         "deploy/docker/create_python_notices.py",
     ]
+    if service == "inference-paddleocr-amd64":
+        fixed.extend(
+            [
+                "deploy/docker/inference.paddleocr.amd64.Dockerfile",
+                "deploy/docker/inference.lean-corners.amd64.Dockerfile",
+                "deploy/docker/buildkit.low-resource.toml",
+                "runtimes/lean-smoke/smoke.py",
+                "deploy/docker/requirements.lean-corners-amd64.in",
+                "deploy/docker/requirements.lean-corners-amd64.txt",
+                "deploy/docker/requirements.paddleocr-amd64.txt",
+                "deploy/docker/requirements.paddle-native-amd64.in",
+                "deploy/docker/requirements.paddle-native-amd64.txt",
+                "runtimes/paddleocr-worker/worker.py",
+                "runtimes/paddleocr-worker/native_backend.py",
+                "configs/public/web-ocr-runtime-template.json",
+                "configs/public/web-ocr-learned-corners-template.json",
+            ]
+        )
     return [ROOT / item for item in fixed] + [
         ROOT / item for item in RUNTIME.read_text().splitlines() if item
     ]
@@ -45,7 +63,9 @@ def allowed_paths(service: str) -> list[Path]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("service", choices=("web", "inference", "inference-amd64"))
+    parser.add_argument(
+        "service", choices=("web", "inference", "inference-amd64", "inference-paddleocr-amd64")
+    )
     parser.add_argument("destination", type=Path)
     args = parser.parse_args()
     destination = args.destination.resolve()

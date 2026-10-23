@@ -1,0 +1,10 @@
+# One runtime environment; native Paddle worker + OpenCV detector + HTTP.
+# No torch, PaddleOCR, PaddleX, training dependencies or second venv.
+paddlepaddle==3.3.1
+numpy==2.2.6
+opencv-python-headless==4.12.0.88
+Pillow==12.3.0
+PyYAML==6.0.3
+pydantic==2.13.4
+starlette==1.6.0
+uvicorn==0.53.0

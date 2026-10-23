@@ -1,0 +1,20 @@
+# Merge with compose.public-candidate.yaml after building and verifying both
+# new images. This file does not change the currently deployed image IDs.
+services:
+  inference:
+    image: ${ANPR_PADDLE_INFERENCE_IMAGE}
+    environment:
+      ANPR_WEB_OCR_CONFIG: /app/configs/web-ocr-runtime.json
+      PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
+      OPENBLAS_NUM_THREADS: "1"
+    volumes:
+      - type: bind
+        source: ${ANPR_PADDLE_MODEL_SOURCE}
+        target: /models/paddleocr/inference
+        read_only: true
+        bind:
+          create_host_path: false
+  web:
+    image: ${ANPR_PADDLE_WEB_IMAGE}
+    environment:
+      ANPR_RECOGNITION_PROVIDER: paddleocr

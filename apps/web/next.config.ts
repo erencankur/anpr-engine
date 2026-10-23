@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: resolve(process.cwd(), "../.."),
   reactStrictMode: true,
+  experimental: { cpus: 1 },
   agentRules: false,
   turbopack: { root: resolve(process.cwd(), "../..") },
   poweredByHeader: false,

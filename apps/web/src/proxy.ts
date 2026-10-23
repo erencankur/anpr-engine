@@ -8,6 +8,11 @@ const SESSION_PATTERN = /^[a-f0-9]{64}$/;
 export function proxy(request: NextRequest) {
   const nonce = randomBytes(16).toString("base64");
   const development = process.env.NODE_ENV === "development";
+  const localOrigin = process.env.ANPR_PUBLIC_ORIGIN ?? "";
+  const localHttp = process.env.ANPR_LOCAL_DIRECT_MODE === "1" &&
+    /^http:\/\/(?:127\.0\.0\.1|localhost):[0-9]{1,5}$/.test(localOrigin) &&
+    request.nextUrl.protocol === "http:" &&
+    request.headers.get("host") === localOrigin.slice("http://".length);
   const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'${development ? " ws:" : ""}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("Content-Security-Policy", csp);
@@ -16,7 +21,7 @@ export function proxy(request: NextRequest) {
   if (!existing || !SESSION_PATTERN.test(existing)) {
     response.cookies.set(SESSION, randomBytes(32).toString("hex"), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && !localHttp,
       sameSite: "strict",
       path: "/",
       maxAge: 60 * 60

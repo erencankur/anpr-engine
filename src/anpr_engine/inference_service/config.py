@@ -20,6 +20,8 @@ class ServiceConfig:
     device: str = "cpu"
     inference_deadline_seconds: float = 120.0
     application_version: str = "0.0.0"
+    web_ocr_config: Path | None = None
+    runtime_profile: str = "legacy"
 
     @property
     def production(self) -> bool:
@@ -28,7 +30,11 @@ class ServiceConfig:
     def validate(self) -> None:
         if self.environment not in {"development", "test", "production"}:
             raise ServiceConfigurationError("invalid_environment")
-        if self.model_bundle is None:
+        if self.runtime_profile not in {"legacy", "lean_corners"}:
+            raise ServiceConfigurationError("invalid_runtime_profile")
+        if self.runtime_profile == "lean_corners" and self.web_ocr_config is None:
+            raise ServiceConfigurationError("lean_ocr_config_not_configured")
+        if self.model_bundle is None and self.runtime_profile == "legacy":
             raise ServiceConfigurationError("model_bundle_not_configured")
         if self.production and (
             self.internal_credential is None
@@ -48,6 +54,7 @@ class ServiceConfig:
             Path(configured_root) if configured_root else Path(__file__).resolve().parents[3]
         )
         configured_bundle = os.environ.get("ANPR_PRIVATE_MODEL_BUNDLE")
+        configured_ocr = os.environ.get("ANPR_WEB_OCR_CONFIG")
         raw_deadline = os.environ.get("ANPR_INFERENCE_DEADLINE_SECONDS", "120")
         try:
             deadline = float(raw_deadline)
@@ -61,4 +68,6 @@ class ServiceConfig:
             device=os.environ.get("ANPR_INFERENCE_DEVICE", "cpu"),
             inference_deadline_seconds=deadline,
             application_version=os.environ.get("ANPR_APPLICATION_VERSION", "0.0.0"),
+            web_ocr_config=Path(configured_ocr) if configured_ocr else None,
+            runtime_profile=os.environ.get("ANPR_RUNTIME_PROFILE", "legacy"),
         )

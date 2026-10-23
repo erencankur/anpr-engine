@@ -1,0 +1,4 @@
+# Only for the explicitly named ANPR test builder; never the Coolify builder.
+[worker.oci]
+  max-parallelism = 1
+  gc = false

@@ -111,7 +111,7 @@ def _pipeline_response(
         ]
         confidence = float(selected["confidence"])
     recognition = result.get("recognition") or {}
-    prediction = recognition.get("tr_text")
+    prediction = recognition.get("display_text", recognition.get("tr_text"))
     structural = recognition.get("structural_validation")
     pipeline_status = str(result.get("pipeline_status", ""))
     status = "prediction_available"
@@ -133,7 +133,14 @@ def _pipeline_response(
         "admission_id": admission_id,
         "status": status,
         "prediction": prediction,
-        "prediction_source": "existing_project_decoder",
+        **(
+            {"candidate_prediction": recognition["candidate_text"]}
+            if recognition.get("candidate_text") is not None
+            else {}
+        ),
+        **({"plate_geometry": result["plate_geometry"]} if "plate_geometry" in result else {}),
+        **({"plate_crops": result["plate_crops"]} if "plate_crops" in result else {}),
+        "prediction_source": result.get("prediction_source", "existing_project_decoder"),
         "decoding_changed_raw": bool(recognition.get("decoding_changed_raw", False)),
         "structural_validity": (
             "valid"
@@ -149,8 +156,18 @@ def _pipeline_response(
             "box_xyxy_normalized": normalized_box,
             "informational_confidence": confidence,
         },
-        "models": model_identities(),
-        "crop_policy": CROP_POLICY,
+        "models": (
+            {
+                role: {
+                    "model_id": result["models"][key]["version"],
+                    "sha256": result["models"][key]["sha256"],
+                }
+                for role, key in (("detection", "detector"), ("recognition", "recognizer"))
+            }
+            if result.get("models")
+            else model_identities()
+        ),
+        "crop_policy": result.get("crop_policy", CROP_POLICY),
         "timings_ms": {
             "total": _bounded_ms(validation_ms + execution_ms),
             "validation": _bounded_ms(validation_ms),
@@ -267,7 +284,7 @@ def create_app(
                 api_version="v1",
                 schema_version=RESPONSE_SCHEMA,
                 model_versions={
-                    key: value["model_id"] for key, value in model_identities().items()
+                    key: value["model_id"] for key, value in response["models"].items()
                 },
             )
             return JSONResponse(response)

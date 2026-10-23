@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anpr-engine.vibesofters.com/schemas/api/v2/anpr-image-inference-response-v2.schema.json",
+  "title": "AnprImageInferenceResponseV2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request_id", "status", "models", "detection", "rectification", "recognition", "structural_validation", "human_review_required", "annotated_image", "timings_ms", "warnings"],
+  "properties": {
+    "schema_version": {"const": "anpr-image-inference-response-v2"},
+    "request_id": {"type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$", "maxLength": 26},
+    "status": {"type": "string", "enum": ["resolved", "unresolved", "no_plate_detected", "geometry_unresolved"]},
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detection", "recognition"],
+      "properties": {
+        "detection": {"$ref": "#/$defs/PublicQuadrilateralDetectionModelIdentityV2"},
+        "recognition": {"$ref": "#/$defs/PublicQuadrilateralRecognitionModelIdentityV2"}
+      }
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "quadrilateral_xy_normalized", "box_xyxy_normalized", "confidence"],
+      "properties": {
+        "state": {"type": "string", "enum": ["found", "unresolved", "not_found"]},
+        "quadrilateral_xy_normalized": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/PublicNormalizedQuadrilateralV2"}]},
+        "box_xyxy_normalized": {"oneOf": [{"type": "null"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}]},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "rectification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "method", "output_width", "output_height"],
+      "properties": {
+        "state": {"type": "string", "enum": ["applied", "not_run", "rejected"]},
+        "method": {"oneOf": [{"const": "PROJECTIVE_QUADRILATERAL_V2"}, {"type": "null"}]},
+        "output_width": {"type": ["integer", "null"], "minimum": 1},
+        "output_height": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "recognition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prediction", "confidence"],
+      "properties": {
+        "prediction": {"type": ["string", "null"], "pattern": "^[0-9A-Z ]{1,16}$", "maxLength": 16},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "structural_validation": {"type": "string", "enum": ["valid", "invalid", "indeterminate", "not_run"]},
+    "human_review_required": {"const": true},
+    "annotated_image": {"type": "null"},
+    "timings_ms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "validation", "detection", "rectification", "recognition"],
+      "properties": {
+        "total": {"type": "number", "minimum": 0, "maximum": 120000},
+        "validation": {"type": "number", "minimum": 0, "maximum": 120000},
+        "detection": {"type": "number", "minimum": 0, "maximum": 120000},
+        "rectification": {"type": "number", "minimum": 0, "maximum": 120000},
+        "recognition": {"type": "number", "minimum": 0, "maximum": 120000}
+      }
+    },
+    "warnings": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "enum": ["LOW_DETECTION_CONFIDENCE", "LOW_RECOGNITION_CONFIDENCE", "STRUCTURAL_VALIDATION_FAILED", "MULTIPLE_DETECTIONS_VALID_QUAD_SELECTED", "UNRESOLVED_GEOMETRY", "RECOGNITION_UNRESOLVED"]}}
+  },
+  "$defs": {
+    "PublicNormalizedPointV2": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+    "PublicNormalizedQuadrilateralV2": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/PublicNormalizedPointV2"}},
+    "PublicQuadrilateralDetectionModelIdentityV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["architecture", "model_id", "sha256"],
+      "properties": {
+        "architecture": {"const": "yolox_multiscale_quad_v2"},
+        "model_id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "PublicQuadrilateralRecognitionModelIdentityV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_id", "sha256"],
+      "properties": {
+        "model_id": {"const": "m3-v4-stroke-20260914"},
+        "sha256": {"const": "25b6e4af757b87da75162293a28274e3a0ecbb7f29bc55489b7132e353ad5ff7"}
+      }
+    }
+  }
+}

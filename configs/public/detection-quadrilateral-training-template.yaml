@@ -1,0 +1,42 @@
+schema_version: "2.0"
+dataset_id: quadrilateral-private-release-TBD
+dataset_content_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+model:
+  architecture: yolox_multiscale_quad_v2
+  image_size: 384
+  base_channels: 24
+  head_channels: 96
+  feature_strides: [8, 16, 32]
+  focal_alpha: 0.75
+  focal_gamma: 2.0
+  box_loss_weight: 5.0
+  corner_loss_weight: 5.0
+  corner_offset_scale: 0.75
+  assignment_center_radius: 2.5
+  assignment_top_k: 10
+  minimum_epochs: 8
+  early_stopping_patience: 4
+training:
+  batch_size: 16
+  epochs: 20
+  optimizer: adamw
+  learning_rate: 0.0005
+  weight_decay: 0.0001
+  num_workers: 0
+  seed: 20260925
+  device: auto
+  augmentation:
+    horizontal_flip_probability: 0.5
+    brightness_limit: 0.15
+    contrast_limit: 0.15
+    rotation_degrees: 5.0
+    translation_fraction: 0.03
+    scale_limit: 0.10
+    perspective_fraction: 0.02
+    maximum_geometry_attempts: 5
+inference:
+  confidence_threshold: 0.25
+  nms_iou_threshold: 0.5
+  max_detections: 10
+  crop_padding_x: 0.0
+  crop_padding_y: 0.0

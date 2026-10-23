@@ -1,0 +1,40 @@
+schema_version: detection-quadrilateral-acceptance-v1
+private_inputs_included: false
+baseline:
+  detector_model_id: yolox_multiscale_v1
+  detector_version: detection-v3-20260827
+  detector_sha256: 0d5e9b52fae5638e0ef1badafdeb53fe0771d056e43c4953d13cceed520e71ea
+  recognition_model_id: cnn_transformer_dual_slot_tr_v1
+dataset:
+  identity: TBD
+  content_sha256: TBD
+  split_group_sha256: TBD
+  true_corner_label_coverage: TBD
+annotation:
+  audited_fraction: TBD
+  corner_error_normalization: TBD
+  maximum_inter_annotator_normalized_corner_error: TBD
+quality_gates:
+  maximum_box_recall_regression_percentage_points: TBD
+  maximum_false_positive_regression: TBD
+  minimum_valid_quadrilateral_rate: TBD
+  minimum_polygon_iou: TBD
+  maximum_p90_normalized_corner_error: TBD
+  pck_thresholds: TBD
+  maximum_raw_exact_regression_percentage_points: TBD
+  maximum_cer_regression_percentage_points: TBD
+  maximum_abstention_rate: TBD
+operations:
+  target_hardware: TBD
+  maximum_p95_end_to_end_latency_ms: TBD
+  maximum_peak_rss_bytes: TBD
+  maximum_peak_device_memory_bytes: TBD
+  maximum_startup_ms: TBD
+rollout:
+  shadow_duration: TBD
+  rollback_triggers: TBD
+  rollback_time_objective_seconds: TBD
+notes:
+  - Populate TBD values only in an access-restricted reviewed copy before candidate selection.
+  - Do not add private paths, counts, images, annotations, plate text, or weight files here.
+  - Development-validation evidence must not be described as independent field accuracy.

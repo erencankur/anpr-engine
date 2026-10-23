@@ -14,14 +14,14 @@ import numpy as np
 from numpy.typing import NDArray
 
 from anpr_engine.inference_service.config import ServiceConfig
-from anpr_engine.integration.anpr_v1 import (
+from anpr_engine.integration.image_input import decode_upload
+from anpr_engine.integration.model_ids import (
     DETECTOR_SHA,
     DETECTOR_VERSION,
     RECOGNIZER_SHA,
     RECOGNIZER_VERSION,
-    AnprV1Pipeline,
-    decode_upload,
 )
+from anpr_engine.recognition.web_runtime import WebOcrConfig, WebOcrRuntime
 from anpr_engine.web_contracts.image_validation import validate_encoded_image
 
 CROP_POLICY = "BLUE_BAND_GLYPH_QUAD_V1"
@@ -48,12 +48,35 @@ PipelineFactory = Callable[[ServiceConfig], Pipeline]
 
 
 def _default_pipeline_factory(config: ServiceConfig) -> Pipeline:
-    assert config.model_bundle is not None
-    return AnprV1Pipeline(
-        config.repository,
-        model_bundle=config.model_bundle,
-        device_name=config.device,
-    )
+    ocr = None
+    if config.web_ocr_config is not None:
+        settings = WebOcrConfig.model_validate_json(config.web_ocr_config.read_text())
+        if settings.timeout_seconds >= config.inference_deadline_seconds:
+            raise ValueError("worker timeout must be shorter than request deadline")
+        ocr = WebOcrRuntime(settings)
+    try:
+        if config.runtime_profile == "lean_corners":
+            from anpr_engine.integration.lean_corners import LeanCornerPipeline
+
+            if ocr is None:
+                raise ValueError("lean runtime requires OCR config")
+            return LeanCornerPipeline(ocr)
+        import torch
+
+        from anpr_engine.integration.anpr_v1 import AnprV1Pipeline
+
+        assert config.model_bundle is not None
+        torch.set_num_threads(1)
+        return AnprV1Pipeline(
+            config.repository,
+            model_bundle=config.model_bundle,
+            device_name=config.device,
+            web_ocr=ocr,
+        )
+    except Exception:
+        if ocr is not None:
+            ocr.close()
+        raise
 
 
 def _validate_decode(payload: bytes, media_type: str) -> NDArray[np.uint8]:
@@ -202,6 +225,9 @@ class ServiceRuntime:
         self._closed = True
         self.readiness_reason = "shutdown"
         await asyncio.to_thread(self._executor.shutdown, True, cancel_futures=True)
+        close = getattr(self.pipeline, "close", None)
+        if callable(close):
+            await asyncio.to_thread(close)
         self.pipeline = None
         self._active = False
 
