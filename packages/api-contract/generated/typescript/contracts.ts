@@ -147,7 +147,6 @@ export interface Notice {
 
 export interface AnprProcessingNoticeV1 {
   readonly schema_version: "anpr-processing-notice-v1";
-  readonly contact: "erncnkr@gmail.com";
   readonly acknowledgement_required: true;
   readonly legal_basis_claim: "user_acknowledgement_not_sole_legal_basis";
   readonly notices: AnprProcessingNoticeV1Notices;

@@ -249,7 +249,6 @@ export function Workspace({ notices, inferenceAvailable }: { notices: { en: Noti
   return <main className="shell premium-workspace" ref={workspaceRef} data-motion="off" aria-busy={busy}>
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-spark" aria-hidden="true">✳</span>VIBESOFTERS <span className="eyebrow-divider">/</span> VISION LAB</p>
           <p className="hero-kicker">{t.tagline}</p>
           <h1><span>{locale === "en" ? "Find the plate." : "Plakaya odaklan."}</span><span className="chrome-text">{locale === "en" ? "Read the detail." : "Detayı yakala."}</span></h1>
           <p className="lead">{t.intro}</p>

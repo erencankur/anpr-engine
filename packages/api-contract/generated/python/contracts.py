@@ -286,7 +286,6 @@ class Notice(TypedDict):
 
 class AnprProcessingNoticeV1(TypedDict):
     schema_version: Literal["anpr-processing-notice-v1"]
-    contact: Literal["erncnkr@gmail.com"]
     acknowledgement_required: Literal[True]
     legal_basis_claim: Literal["user_acknowledgement_not_sole_legal_basis"]
     notices: AnprProcessingNoticeV1Notices

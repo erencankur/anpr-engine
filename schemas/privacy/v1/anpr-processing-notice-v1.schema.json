@@ -4,10 +4,9 @@
   "title": "AnprProcessingNoticeV1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "contact", "acknowledgement_required", "legal_basis_claim", "notices"],
+  "required": ["schema_version", "acknowledgement_required", "legal_basis_claim", "notices"],
   "properties": {
     "schema_version": {"const": "anpr-processing-notice-v1"},
-    "contact": {"const": "erncnkr@gmail.com"},
     "acknowledgement_required": {"const": true},
     "legal_basis_claim": {"const": "user_acknowledgement_not_sole_legal_basis"},
     "notices": {

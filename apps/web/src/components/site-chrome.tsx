@@ -65,7 +65,7 @@ export function SiteChrome({ initialTheme, children }: { initialTheme: Theme; ch
 
   return <LocaleContext.Provider value={locale}>
     <header className="site-header"><div className="shell header-inner">
-      <Link className="brand" href="/" aria-label={t.home}><Image src="/icon.png" alt="" width={38} height={38} priority /><span className="brand-wordmark">ANPR <span className="brand-accent">Engine</span><small>BY VIBESOFTERS</small></span></Link>
+      <Link className="brand" href="/" aria-label={t.home}><Image src="/icon.png" alt="" width={38} height={38} priority /><span className="brand-wordmark">ANPR <span className="brand-accent">Engine</span></span></Link>
       <nav className="header-controls" aria-label={t.navigation}>
         <a className="header-control contact-control" href="https://vibesofters.com">{t.contactUs}</a>
         <div className="header-segment language-control" role="group" aria-label={locale === "tr" ? "Dil seçimi" : "Language"}>
@@ -80,8 +80,8 @@ export function SiteChrome({ initialTheme, children }: { initialTheme: Theme; ch
     </div></header>
     {children}
     <footer className="site-footer">
-      <div className="shell footer-signature"><div><p className="eyebrow">VIBESOFTERS / VISION LAB</p><p className="footer-title">{locale === "en" ? "A different perspective." : "Farklı bir bakış açısı."}</p></div><a className="footer-round-link" href="https://vibesofters.com" aria-label={t.contactUs}>↗</a></div>
-      <div className="shell footer-inner"><span>© 2026 VibeSofters</span><nav aria-label={t.information}><Link href="/information/privacy">{t.privacy}</Link><Link href="/information/responsible-use">{t.responsible}</Link><Link href="/information/limitations">{t.limitations}</Link><a href="https://github.com/erencankur/anpr-engine" rel="noreferrer">{t.repo}</a><a href="mailto:erncnkr@gmail.com">{t.contact}</a></nav></div>
+      <div className="shell footer-signature"><div><p className="footer-title">{locale === "en" ? "A different perspective." : "Farklı bir bakış açısı."}</p></div><a className="footer-round-link" href="https://vibesofters.com" aria-label={t.contactUs}>↗</a></div>
+      <div className="shell footer-inner"><nav aria-label={t.information}><Link href="/information/privacy">{t.privacy}</Link><Link href="/information/responsible-use">{t.responsible}</Link><Link href="/information/limitations">{t.limitations}</Link><a href="https://github.com/erencankur/anpr-engine" rel="noreferrer">{t.repo}</a></nav></div>
     </footer>
   </LocaleContext.Provider>;
 }

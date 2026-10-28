@@ -118,7 +118,18 @@ test(`bilingual raw-image BFF boundary and safe lifecycle (${provider})`, async 
     assert.match(englishHtml, /icon\.png/);
     assert.match(englishHtml, /İletişime Geç/);
     assert.match(englishHtml, /https:\/\/vibesofters\.com/);
-    assert.match(englishHtml, /© 2026 VibeSofters<\/span>/);
+    const visibleCopy = (html) => html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ");
+    assert.doesNotMatch(visibleCopy(englishHtml), /vibesofters|vision lab|eren\s+cankur|erncnkr@gmail\.com|©/i);
+    assert.doesNotMatch(englishHtml, /erncnkr@gmail\.com|mailto:/i);
+    assert.equal((englishHtml.match(/href="https:\/\/vibesofters\.com"/g) ?? []).length, 2);
+    for (const topic of ["privacy", "responsible-use", "limitations"]) {
+      const information = await fetch(`${origin}/information/${topic}`);
+      assert.equal(information.status, 200);
+      const html = await information.text();
+      assert.doesNotMatch(visibleCopy(html), /vibesofters|vision lab|eren\s+cankur|erncnkr@gmail\.com|©/i);
+      assert.doesNotMatch(html, /erncnkr@gmail\.com|mailto:/i);
+      assert.equal((html.match(/href="https:\/\/vibesofters\.com"/g) ?? []).length, 2);
+    }
     assert.doesNotMatch(englishHtml, /Eren Cankur · M\. Sırac Özer/);
     assert.match(englishHtml, /https:\/\/github\.com\/erencankur\/anpr-engine/);
     assert.match(englishHtml, /4 CORNERS/);
