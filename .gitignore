@@ -1,4 +1,8 @@
 # Secrets and local environment overrides
+/.local-private/
+/.local-archive/
+/.local-datasets/
+/start-local.command
 .env
 .env.*
 !.env.example

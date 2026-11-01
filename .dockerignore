@@ -1,0 +1,8 @@
+# Local archives, datasets and private model/runtime material are never build inputs.
+.local-private
+.local-archive
+.local-datasets
+.git
+.venv
+**/node_modules
+**/.next
