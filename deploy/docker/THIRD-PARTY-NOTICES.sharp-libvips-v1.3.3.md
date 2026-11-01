@@ -16,4 +16,4 @@ libxml2, pixman. BSD-3-Clause: highway. BSD-2-Clause: libarchive and
 libimagequant. Separate license texts: fontconfig, FreeType, libpng, libtiff,
 libwebp, mozjpeg, and zlib-ng. Consult the publisher's notice and each
 component's source for full copyrights and terms. See also the recorded
-[technical review](https://github.com/vibesofters/anpr-engine/blob/main/docs/reference/web-dependency-redistribution-review.md).
+[technical review](https://github.com/erencankur/anpr-engine/blob/main/docs/reference/web-dependency-redistribution-review.md).

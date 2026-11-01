@@ -182,6 +182,6 @@ See the [contribution guide](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT
 and [security policy](SECURITY.md). Do not submit vulnerabilities through
 public Issues. Send security and privacy/data incidents to
 [erncnkr@gmail.com](mailto:erncnkr@gmail.com). The source repository is
-[vibesofters/anpr-engine](https://github.com/vibesofters/anpr-engine).
+[erencankur/anpr-engine](https://github.com/erencankur/anpr-engine).
 
 Copyright © 2026 Eren Cankur.
